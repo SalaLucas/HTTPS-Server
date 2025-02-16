@@ -4,29 +4,27 @@ from io import BytesIO
 
 class HTTPRequestHandler(BaseHTTPRequestHandler):
 
-    def GET_handler(self):
-
-        # codígo 200 implica q tudo está ok
-
+    def do_GET(self):
         self.send_response(200)
         self.end_headers()
         self.wfile.write(b"Resposta do servidor enviada")
     
-    def POST_handler(self):
+    def do_POST(self):
+        content_length = int(self.headers["Content-Length"])
+        content = self.rfile.read(content_length)
 
-        conteudo_tam = (int)(self.headers["Content-Length"])
-        conteudo = self.rfile.read(conteudo_tam)
+        response = BytesIO()
+        response.write(b'Essa e o POST request recebido: ')
+        response.write(content)
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(response.getvalue())
 
-        resp = BytesIO()
-        resp.write(b'Essa e o POST request recebido: ')
-        resp.write(conteudo)
-        self.wfile.write(resp.getvalue())
-
-httpServer = HTTPServer(('localhost', 4433), HTTPRequestHandler)
-
-context = ssl._create_unverified_context(certfile="certificate.pem", keyfile="key.pem")
-
-print(f"Servidor: localhost 127.0.0.1, port = 4433")
+httpServer = HTTPServer(('localhost', 8000), HTTPRequestHandler)
+context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+context.load_cert_chain(certfile = 'certificate.pem', keyfile = 'key.pem')
+context.check_hostname = False
+print(f"Servidor: localhost =  127.0.0.1, port = 8000")
 
 httpServer.socket = context.wrap_socket(httpServer.socket, server_side=True)
 
